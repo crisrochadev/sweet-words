@@ -35,7 +35,7 @@
       </div>
     </div>
     <div
-      class="w-full max-w-[500px] h-[100px] mx-auto my-4 gap-4 ] rounded shadow-md"
+      class="w-full max-w-[500px] h-[100px] mx-auto my-4 gap-4 ] rounded shadow-md inputs-words"
     >
       <p class="text-center">{{ levelPlay.main_word.hint }}</p>
       <div class="w-full p-2 flex justify-center gap-3 grid-wows-1 h-[80px]">
@@ -47,6 +47,7 @@
         >
           <input
             @input="(e) => checkLetter(e, letter, 'main')"
+            @keydown="backspace"
             maxlength="1"
             :id="`main-letter-${i}`"
             class="flex items-center justify-center w-10 h-10 border-2 border-teal-500 rounded shadow-md text-teal-500 font-extrabold uppercase text-center"
@@ -58,7 +59,7 @@
       </div>
     </div>
     <div
-      class="h-[calc(100%_-_180px)] bg-amber-50 rounded shadow-md p-2 max-w-[500px] mx-auto overflow-y-auto"
+      class="h-[calc(100%_-_180px)] bg-amber-50 rounded shadow-md p-2 max-w-[500px] mx-auto overflow-y-auto inputs-words"
     >
       <div class="" v-for="(word, index) in levelPlay.words" :key="word.word">
         <p class="text-start">{{ word.hint }}</p>
@@ -74,6 +75,7 @@
             <input
               :id="`word-${index}-letter-${i}`"
               @input="(e) => checkLetter(e, letter, index)"
+              @keydown="backspace"
               maxlength="1"
               class="flex items-center justify-center w-8 h-8 border-2 border-teal-500 rounded shadow-md text-teal-500 font-extrabold uppercase text-center"
             />
@@ -90,25 +92,28 @@
 <script setup>
 import Swal from "sweetalert2";
 import { ref, computed, watch } from "vue";
-import levels from "../levels.js";
+import levels from "../assets/utils/words/levels.js";
 import useLetters from "../composables/shuffleLetters.js";
+import { useStorage } from "@vueuse/core";
 
 const { shuffleEmojis } = useLetters();
-const wordsList = ref(levels);
-const level = ref(1);
+const wordsList = ref(useStorage("wordsList", levels));
+const level = ref(useStorage("words-level", 1));
 const levelPlay = computed(() => wordsList.value[level.value - 1]);
-const lettersEmojis = ref(shuffleEmojis);
-const words = ref({
-  main: false,
-  0: false,
-  1: false,
-  2: false,
-  3: false,
-  4: false,
-});
-
+const lettersEmojis = ref(useStorage("lettersEmoji", shuffleEmojis));
+const words = ref(
+  useStorage("words", {
+    main: false,
+    0: false,
+    1: false,
+    2: false,
+    3: false,
+    4: false,
+  })
+);
+const pointLevel = ref(useStorage("word-points", 0));
 const points = computed(() => {
-  let point = 0;
+  let point = pointLevel.value;
   if (words.value.main) {
     point += 5;
   }
@@ -139,6 +144,15 @@ watch(points, (newval) => {
       inp.value = "";
       inp.removeAttribute("disabled");
     });
+    pointLevel.value = points.value;
+    words.value = {
+      main: false,
+      0: false,
+      1: false,
+      2: false,
+      3: false,
+      4: false,
+    };
     Swal.fire({
       title: "Uhuu! Você passou de nível",
       text: "Vamos para o nível " + level.value,
@@ -155,6 +169,56 @@ watch(points, (newval) => {
     });
   }
 });
+
+function getNextInput(nextInput, newinput) {
+  nextInput =
+    newinput.parentNode?.parentNode?.parentNode?.nextElementSibling?.querySelector(
+      "input"
+    );
+  newinput = nextInput;
+  console.log(nextInput);
+  while (nextInput && nextInput.disabled) {
+    nextInput =
+      nextInput.parentNode?.nextElementSibling?.querySelector("input");
+  }
+  return { nextInput, newinput };
+}
+
+function focusNext(input, nextInput, parent) {
+  nextInput = parent.nextElementSibling.querySelector("input");
+  while (nextInput && nextInput.disabled) {
+    nextInput = nextInput.parentNode.nextElementSibling?.querySelector("input");
+  }
+
+  let newinput = null;
+  if (!nextInput) {
+    let values = getNextInput(nextInput, input);
+    nextInput = values.nextInput;
+    newinput = values.newinput;
+    if (!nextInput && newinput) {
+      let values = getNextInput(nextInput, newinput);
+      nextInput = values.nextInput;
+      newinput = values.newinput;
+      if (!nextInput && newinput) {
+        let values = getNextInput(nextInput, newinput);
+        nextInput = values.nextInput;
+        newinput = values.newinput;
+        if (!nextInput && newinput) {
+          let values = getNextInput(nextInput, newinput);
+          nextInput = values.nextInput;
+          newinput = values.newinput;
+          if (!nextInput && newinput) {
+            let values = getNextInput(nextInput, newinput);
+            nextInput = values.nextInput;
+            newinput = values.newinput;
+          }
+        }
+      }
+    }
+  }
+
+  return nextInput;
+}
 function checkLetter(e, letter) {
   const input = e.target;
   if (input.value.toLowerCase() == letter.toLowerCase()) {
@@ -209,6 +273,30 @@ function checkLetter(e, letter) {
       words.value[i] = true;
     }
   });
+  if (input.value.length == 1) {
+    let nextInput = input.parentNode.nextElementSibling?.querySelector("input");
+
+    while (nextInput && nextInput.disabled) {
+      nextInput =
+        nextInput.parentNode.nextElementSibling?.querySelector("input");
+    }
+
+    if (!nextInput) {
+      nextInput = focusNext(
+        input,
+        nextInput,
+        document.querySelector(".inputs-words")
+      );
+    }
+    nextInput.focus();
+  }
+}
+function backspace(e) {
+  if (e.key == "Backspace" && e.target.value == "") {
+    let prev =
+      e.target.parentNode?.previousElementSibling?.querySelector("input");
+    if (prev) prev.focus();
+  }
 }
 </script>
 
