@@ -1,303 +1,314 @@
 <template>
-  <div class="w-screen h-screen p-4">
-    <div class="w-full max-w-[500px] mx-auto grid grid-cols-3 gap-4 h-[40px]">
-      <div class="flex items-center w-full relative">
-        <img
-          src="/images/charge.svg"
-          width="35px"
-          class="absolute top-0 z-50"
-        />
-        <p
-          class="shadow-md h-[30px] w-full rounded top-1 left-2 text-end pr-2 text-teal-500 font-extrabold border-2 border-teal-500 absolute"
-        >
-          {{ points }}
-        </p>
-      </div>
-      <div class="flex items-center w-full relative">
-        <img
-          src="/images/pencil.svg"
-          width="35px"
-          class="absolute top-0 z-50"
-        />
-        <p
-          class="shadow-md h-[30px] w-full rounded top-1 left-2 text-end pr-2 text-teal-500 font-extrabold border-2 border-teal-500 absolute"
-        >
-          00
-        </p>
-      </div>
-      <div class="flex items-center w-full relative">
-        <img src="/images/treat.svg" width="35px" class="absolute top-0 z-50" />
-        <p
-          class="shadow-md h-[30px] w-full rounded top-1 left-2 text-end pr-2 text-teal-500 font-extrabold border-2 border-teal-500 absolute"
-        >
-          00
-        </p>
-      </div>
-    </div>
+  <div class="w-screen flex justify-center items-center h-screen">
     <div
-      class="w-full max-w-[500px] h-[100px] mx-auto my-4 gap-4 ] rounded shadow-md inputs-words"
+      v-if="Object.keys(mainword).length"
+      class="w-11/12 h-auto max-w-[400px]"
     >
-      <p class="text-center">{{ levelPlay.main_word.hint }}</p>
-      <div class="w-full p-2 flex justify-center gap-3 grid-wows-1 h-[80px]">
-        <div
-          v-for="(letter, i) in levelPlay.main_word.word"
-          :key="letter"
-          id="word-main"
-          class="w-full h-full relative grid grid-cols-1 grid-rows-1 justify-center items-center"
-        >
-          <input
-            @input="(e) => checkLetter(e, letter, 'main')"
-            @keydown="backspace"
-            maxlength="1"
-            :id="`main-letter-${i}`"
-            class="flex items-center justify-center w-10 h-10 border-2 border-teal-500 rounded shadow-md text-teal-500 font-extrabold uppercase text-center"
-          />
-          <div class="text-center text-xl">
-            {{ lettersEmojis[letter] }}
+      <div class="w-full justify-between items-center flex">
+        <div class="flex relative items-center">
+          <img src="/images/treat.svg" class="w-10 shadow-md" />
+          <div
+            class="shadow-md h-8 p-2 text-center flex items-center justify-center font-extrabold text-amber-800 border-t border-r border-b border-amber-300 rounded bg-white w-22"
+          >
+            {{ points }}
+          </div>
+        </div>
+        <div class="flex relative items-center">
+          <img src="/images/pencil.svg" class="w-10 shadow-md" />
+          <div
+            class="shadow-md h-8 p-2 text-center flex items-center justify-center font-extrabold text-amber-800 border-t border-r border-b border-amber-300 rounded bg-white w-22"
+          >
+            {{ level + 1 }}
           </div>
         </div>
       </div>
-    </div>
-    <div
-      class="h-[calc(100%_-_180px)] bg-amber-50 rounded shadow-md p-2 max-w-[500px] mx-auto overflow-y-auto inputs-words"
-    >
-      <div class="" v-for="(word, index) in levelPlay.words" :key="word.word">
-        <p class="text-start">{{ word.hint }}</p>
+      <!-- Paravra principal -->
+      <div
+        class="w-full relative p-2 shadow-md rounded bg-amber-50 my-2 text-center"
+        v-if="Object.keys(mainword).length"
+      >
+        <p>{{ mainwordhint }}</p>
         <div
-          class="w-full p-2 flex justify-start gap-3 grid-wows-1 h-[80px]"
-          :id="`word-${index}`"
+          class="rounded-full shadow-md absolute -top-2 -right-2 p-2 bg-green-100 w-8 h-8 flex items-center font-extrabold text-green-500"
         >
-          <div
-            v-for="(letter, i) in word.word"
-            :key="letter"
-            class="relative grid grid-cols-1 grid-rows-1 justify-center items-center"
-          >
+          <img src="/images/treat.svg" class="w-2 shadow-md" />
+          <span>5</span>
+        </div>
+        <div class="flex justify-center gap-1" ref="main_word">
+          <div v-for="(letter, i) in mainwordlevel.word" :key="i">
+            <div class="text-lg my-1">
+              {{ shuffleEmojis[letter] }}
+            </div>
             <input
-              :id="`word-${index}-letter-${i}`"
-              @input="(e) => checkLetter(e, letter, index)"
-              @keydown="backspace"
+              v-if="mainword[letter + i]"
+              @input="inputMain(i, letter)"
+              @keyup="(e) => backspaceLetter(e, letter, i)"
+              :ref="`letter-${i}`"
+              type="text"
               maxlength="1"
-              class="flex items-center justify-center w-8 h-8 border-2 border-teal-500 rounded shadow-md text-teal-500 font-extrabold uppercase text-center"
+              :class="[mainword[letter + i].hit ? 'bg-green-500' : '']"
+              class="w-10 h-10 rounded border border-amber-500 text-center font-extrabold uppercase text-amber-900"
+              :readonly="mainword[letter + i].hit"
+              v-model="mainword[letter + i].letter"
             />
-            <div class="text-center text-xl">
-              {{ lettersEmojis[letter] }}
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-full relative p-2 shadow-md rounded bg-amber-50 my-2 text-center"
+      >
+        <template v-for="ind in wordslevelwords" :key="ind">
+          <div class="w-full text-center">
+            <p>{{ this[`word${ind}hint`] }}</p>
+            <div
+              class="rounded-full shadow-md absolute -top-2 -right-2 p-2 bg-green-100 w-8 h-8 flex items-center font-extrabold text-green-500"
+            >
+              <img src="/images/treat.svg" class="w-2 shadow-md" />
+              <span>5</span>
+            </div>
+            <div class="flex justify-center gap-1" ref="one_word">
+              <div v-for="(letter, i) in this[`word${ind}level`].word" :key="i">
+                <div>
+                  {{ shuffleEmojis[letter] }}
+                </div>
+                <input
+                  @input="inputWords(ind, i, letter)"
+                  @keyup="(e) => backspaceLetters(e, ind, letter, i)"
+                  :ref="`letter-words-${i}-${ind}`"
+                  type="text"
+                  class="w-10 h-10 rounded border border-amber-500 text-center font-extrabold uppercase text-amber-900"
+                  maxlength="1"
+                  :class="[
+                    this[`word${ind}`][letter + i].hit ? 'bg-green-500' : '',
+                  ]"
+                  :readonly="this[`word${ind}`][letter + i].hit"
+                  v-model="this[`word${ind}`][letter + i].letter"
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </template>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import Swal from "sweetalert2";
-import { ref, computed, watch } from "vue";
-import levels from "../assets/utils/words/levels.js";
-import useLetters from "../composables/shuffleLetters.js";
+<script>
 import { useStorage } from "@vueuse/core";
-
-const { shuffleEmojis } = useLetters();
-const wordsList = ref(useStorage("wordsList", levels));
-const level = ref(useStorage("words-level", 1));
-const levelPlay = computed(() => wordsList.value[level.value - 1]);
-const lettersEmojis = ref(useStorage("lettersEmoji", shuffleEmojis));
-const words = ref(
-  useStorage("words", {
-    main: false,
-    0: false,
-    1: false,
-    2: false,
-    3: false,
-    4: false,
-  })
-);
-const pointLevel = ref(useStorage("word-points", 0));
-const points = computed(() => {
-  let point = pointLevel.value;
-  if (words.value.main) {
-    point += 5;
-  }
-
-  if (words.value[0]) {
-    point += 1;
-  }
-  if (words.value[1]) {
-    point += 1;
-  }
-  if (words.value[2]) {
-    point += 1;
-  }
-  if (words.value[3]) {
-    point += 1;
-  }
-  if (words.value[4]) {
-    point += 1;
-  }
-  return point;
-});
-
-watch(points, (newval) => {
-  if (newval % 10 == 0) {
-    level.value = level.value + 1;
-    Array.from(document.querySelectorAll("input")).forEach((inp) => {
-      inp.style.background = "transparent";
-      inp.value = "";
-      inp.removeAttribute("disabled");
-    });
-    pointLevel.value = points.value;
-    words.value = {
-      main: false,
-      0: false,
-      1: false,
-      2: false,
-      3: false,
-      4: false,
+import useLetters from "../composables/shuffleLetters";
+import levels from "../utils/words/levels.js";
+import Swal from "sweetalert2";
+export default {
+  data() {
+    const { shuffleEmojis } = useLetters();
+    return {
+      mainword: useStorage("mainword", {}),
+      word1: useStorage("word1", {}),
+      word2: useStorage("word2", {}),
+      word3: useStorage("word3", {}),
+      word4: useStorage("word4", {}),
+      word5: useStorage("word5", {}),
+      mainwordlevel: levels[0].main_word,
+      mainwordhint: null,
+      word1level: [],
+      word2level: [],
+      word3level: [],
+      word4level: [],
+      word5level: [],
+      word1hint: useStorage("word1hint", null),
+      word2hint: useStorage("word2hint", null),
+      word3hint: useStorage("word3hint", null),
+      word4hint: useStorage("word4hint", null),
+      word5hint: useStorage("word5hint", null),
+      wordslevelwords: [1, 2, 3, 4, 5],
+      points: useStorage("points", 0),
+      level: useStorage("level", 0),
+      shuffleEmojis,
     };
-    Swal.fire({
-      title: "Uhuu! Você passou de nível",
-      text: "Vamos para o nível " + level.value,
-      width: 600,
-      padding: "3em",
-      color: "#716add",
-      background: "#fff url(/images/trees.png)",
-      backdrop: `
+  },
+  mounted() {
+    this.init();
+  },
+  watch: {
+    points(val) {
+      if (val % 10 == 0) {
+        this.level++;
+        this.mainword = {};
+        this.word1 = {};
+        this.word2 = {};
+        this.word3 = {};
+        this.word4 = {};
+        this.word5 = {};
+        Swal.fire({
+          title: "Custom width, padding, color, background.",
+          width: 600,
+          padding: "3em",
+          color: "#716add",
+          background: "#fff url(/images/bg.png)",
+          backdrop: `
     rgba(0,0,123,0.4)
-    url("/images/nyan-cat.gif")
+    url("/images/PYh.gif")
     left top
     no-repeat
   `,
-    });
-  }
-});
-
-function getNextInput(nextInput, newinput) {
-  nextInput =
-    newinput.parentNode?.parentNode?.parentNode?.nextElementSibling?.querySelector(
-      "input"
-    );
-  newinput = nextInput;
-  console.log(nextInput);
-  while (nextInput && nextInput.disabled) {
-    nextInput =
-      nextInput.parentNode?.nextElementSibling?.querySelector("input");
-  }
-  return { nextInput, newinput };
-}
-
-function focusNext(input, nextInput, parent) {
-  nextInput = parent.nextElementSibling.querySelector("input");
-  while (nextInput && nextInput.disabled) {
-    nextInput = nextInput.parentNode.nextElementSibling?.querySelector("input");
-  }
-
-  let newinput = null;
-  if (!nextInput) {
-    let values = getNextInput(nextInput, input);
-    nextInput = values.nextInput;
-    newinput = values.newinput;
-    if (!nextInput && newinput) {
-      let values = getNextInput(nextInput, newinput);
-      nextInput = values.nextInput;
-      newinput = values.newinput;
-      if (!nextInput && newinput) {
-        let values = getNextInput(nextInput, newinput);
-        nextInput = values.nextInput;
-        newinput = values.newinput;
-        if (!nextInput && newinput) {
-          let values = getNextInput(nextInput, newinput);
-          nextInput = values.nextInput;
-          newinput = values.newinput;
-          if (!nextInput && newinput) {
-            let values = getNextInput(nextInput, newinput);
-            nextInput = values.nextInput;
-            newinput = values.newinput;
-          }
-        }
+        }).then(() => {
+          this.init();
+        });
       }
-    }
-  }
-
-  return nextInput;
-}
-function checkLetter(e, letter) {
-  const input = e.target;
-  if (input.value.toLowerCase() == letter.toLowerCase()) {
-    input.style.background = "#BCD269";
-    input.setAttribute("disabled", "disabled");
-    if (level.value < 3) {
-      levelPlay.value.words.forEach((word, index) => {
-        word.word.forEach((l, i) => {
-          const letterEl = document.getElementById(`word-${index}-letter-${i}`);
-          if (l.toLowerCase() == letter.toLowerCase()) {
-            letterEl.style.background = "#BCD269";
-            letterEl.value = l;
-            letterEl.setAttribute("disabled", "disabled");
-          }
+    },
+  },
+  methods: {
+    init() {
+      this.mainwordlevel = levels[this.level].main_word;
+      this.word1level = levels[this.level].words[0];
+      this.word2level = levels[this.level].words[1];
+      this.word3level = levels[this.level].words[2];
+      this.word4level = levels[this.level].words[3];
+      this.word5level = levels[this.level].words[4];
+      this.mainwordhint = this.mainwordlevel.hint;
+      let mainword = new Map();
+      this.mainwordlevel.word.forEach((letter, i) => {
+        mainword.set(letter + i, {
+          hit: false,
+          letter: null,
         });
       });
-      levelPlay.value.main_word.word.forEach((l, i) => {
-        const letterEl = document.getElementById(`main-letter-${i}`);
-        if (l.toLowerCase() == letter.toLowerCase()) {
-          letterEl.style.background = "#BCD269";
-          letterEl.value = l;
-          letterEl.setAttribute("disabled", "disabled");
-        }
-      });
-    }
-  }
-  let word = [];
-  const mainWord = levelPlay.value.main_word.word.join("");
-  const arrMain = Array.from(document.querySelectorAll(`#word-main input`));
-  arrMain.forEach((elIn) => {
-    if (elIn != "") {
-      word.push(elIn.value.toLowerCase());
-    }
-  });
-  let joinwordmain = word.join("");
-
-  if (joinwordmain == mainWord) {
-    words.value.main = true;
-  }
-  levelPlay.value.words.forEach((w, i) => {
-    let allword = [];
-    const word = levelPlay.value.words[i].word.join("");
-    const arrword = Array.from(document.querySelectorAll(`#word-${i} input`));
-    arrword.forEach((elIn) => {
-      if (elIn != "") {
-        allword.push(elIn.value.toLowerCase());
+      this.mainword = Object.fromEntries(mainword);
+      console.log(this.mainword);
+      for (let i = 1; i <= 5; i++) {
+        let word = new Map();
+        this[`word${i}hint`] = this[`word${i}level`].hint;
+        this[`word${i}level`].word.forEach((letter, index) => {
+          word.set(letter + index, {
+            hit: false,
+            letter: null,
+          });
+        });
+        this[`word${i}`] = Object.fromEntries(word);
+        console.log(this[`word${i}`]);
       }
-    });
-    let joinword = allword.join("");
+    },
+    nextInputWord(next, nextIndex, ind = 1) {
+      nextIndex = 0;
+      next = this.$refs[`letter-words-${nextIndex}-${ind}`];
+      while (next && next.length && next[0].readonly) {
+        nextIndex++;
+        next = this.$refs[`letter-words-${nextIndex}-${ind}`];
+      }
+      if (next && next.length) next[0].focus();
+      else {
+        ind++;
+        if (ind <= 5) {
+          this.nextInputWord(next, nextIndex, ind);
+        }
+      }
+    },
+    inputMain(index, letter) {
+      if (
+        this.mainword[letter + index].letter.toLowerCase() ==
+        letter.toLowerCase()
+      ) {
+        this.mainword[letter + index].hit = true;
+      }
+      if (Object.values(this.mainword).every((l) => l.hit)) {
+        this.points += 5;
+      }
+      if (this.mainword[letter + index].letter.length == 1) {
+        let nextIndex = index + 1;
+        let next = this.$refs[`letter-${nextIndex}`];
 
-    if (joinword == word) {
-      words.value[i] = true;
-    }
-  });
-  if (input.value.length == 1) {
-    let nextInput = input.parentNode.nextElementSibling?.querySelector("input");
-
-    while (nextInput && nextInput.disabled) {
-      nextInput =
-        nextInput.parentNode.nextElementSibling?.querySelector("input");
-    }
-
-    if (!nextInput) {
-      nextInput = focusNext(
-        input,
-        nextInput,
-        document.querySelector(".inputs-words")
-      );
-    }
-    nextInput.focus();
-  }
-}
-function backspace(e) {
-  if (e.key == "Backspace" && e.target.value == "") {
-    let prev =
-      e.target.parentNode?.previousElementSibling?.querySelector("input");
-    if (prev) prev.focus();
-  }
-}
+        while (next && next.length && next[0].readonly) {
+          nextIndex++;
+          next = this.$refs[`letter-${nextIndex}`];
+        }
+        if (next && next.length) next[0].focus();
+        else {
+          this.nextInputWord(next, nextIndex);
+        }
+      }
+    },
+    backspaceLetter(e, letter, index) {
+      if (e.key == "Backspace") {
+        if (
+          !this.mainword[letter + index].letter ||
+          this.mainword[letter + index].letter.length == ""
+        ) {
+          let prevIndex = index - 1;
+          let prev = this.$refs[`letter-${prevIndex}`];
+          while (prev && prev.length && prev[0].readonly) {
+            prevIndex--;
+            prev = this.$refs[`letter-${prevIndex}`];
+          }
+          if (prev.length && prev) prev[0].focus();
+        }
+      }
+    },
+    inputWords(ind, index, letter) {
+      if (
+        this[`word${ind}`][letter + index].letter.toLowerCase() ==
+        letter.toLowerCase()
+      ) {
+        this[`word${ind}`][letter + index].hit = true;
+      }
+      if (Object.values(this[`word${ind}`]).every((l) => l.hit)) {
+        this.points += 1;
+      }
+      if (this[`word${ind}`][letter + index].letter.length == 1) {
+        let nextIndex = index + 1;
+        let next = this.$refs[`letter-words-${nextIndex}-${ind}`];
+        console.log(next);
+        while (next && next.length && next[0].readonly) {
+          nextIndex++;
+          next = this.$refs[`letter-words-${nextIndex}-${ind}`];
+        }
+        if (next && next.length) next[0].focus();
+        else {
+          nextIndex = 0;
+          ind++;
+          console.log(ind);
+          next = this.$refs[`letter-words-${nextIndex}-${ind}`];
+          console.log(next);
+          while (next && next.length && next[0].readonly) {
+            nextIndex++;
+            next = this.$refs[`letter-words-${nextIndex}-${ind}`];
+          }
+          if (next && next.length) next[0].focus();
+        }
+      }
+    },
+    backspaceLetters(e, ind, letter, index) {
+       if (e.key == "Backspace") {
+        let prevIndex = index - 1;
+        let prev = this.$refs[`letter-words-${prevIndex}-${ind}`];
+        while (prev && prev.length && prev[0].readonly) {
+          prevIndex--;
+          prev = this.$refs[`letter-words-${prevIndex}-${ind}`];
+        }
+        if (prev && prev.length) prev[0].focus();
+        else {
+          ind--;
+          if (this[`word${ind}`]) {
+            prevIndex = Object.keys(this[`word${ind}`]).length - 1;
+            prev = this.$refs[`letter-words-${prevIndex}-${ind}`];
+            while (prev && prev.length && prev[0].readonly) {
+              prevIndex--;
+              prev = this.$refs[`letter-words-${prevIndex}-${ind}`];
+            }
+            if (prev && prev.length) prev[0].focus();
+          } else {
+            let prevIndex = Object.keys(this.mainword).length - 1;
+            let prev = this.$refs[`letter-${prevIndex}`];
+            while (prev && prev.length && prev[0].readonly) {
+              prevIndex--;
+              prev = this.$refs[`letter-${prevIndex}`];
+            }
+            if (prev.length && prev) prev[0].focus();
+          }
+        }
+      }
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped></style>
